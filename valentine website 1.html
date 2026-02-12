@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Valentine's Day 💖</title>
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  text-align: center;
+  background: radial-gradient(circle at 50% 50%, rgb(255,150,200), pink);
+  height: 100vh;
+  margin: 0;
+  overflow: hidden;
+  position: relative;
+  transition: background 0.2s;
+}
+
+.container {
+  position: relative;
+  top: 30%;
+  z-index: 10;
+}
+
+button {
+  padding: 15px 30px;
+  margin: 20px;
+  font-size: 20px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  opacity: 0; /* START INVISIBLE */
+  transition: opacity 1s ease-in;
+}
+
+#yes {
+  background-color: #ff4d6d;
+  color: white;
+  animation: pulse 1.5s infinite ease-in-out; /* PULSE */
+}
+
+#no {
+  background-color: #ffcccc;
+  position: relative;
+}
+
+canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+/* ================= FLOATING HEARTS ================= */
+.heart {
+  position: absolute;
+  bottom: -40px;
+  font-size: 24px;
+  opacity: 0;
+  animation: floatUp linear forwards;
+  pointer-events: none;
+  z-index: 0;
+  transition: opacity 0.5s ease-in;
+}
+
+@keyframes floatUp {
+  0% { transform: translateX(0) translateY(0) scale(1); opacity: 0; }
+  10% { opacity: 0.6; }
+  100% { transform: translateX(var(--drift)) translateY(-110vh) scale(1.2); opacity: 0; }
+}
+
+/* FLOWER */
+.flower-container {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 300px;
+  height: 350px;
+  transform: translateX(-50%);
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* STEM */
+.stem {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 12px;
+  height: 0;
+  background: #2f7d32;
+  border-radius: 6px;
+  transform: translateX(-50%);
+  animation: growStem 2s forwards ease-out;
+}
+
+@keyframes growStem { to { height: 220px; } }
+
+/* VINES */
+.vine { position: absolute; bottom: 0; width: 6px; height: 0; background: #2f7d32; border-radius: 3px; transform-origin: bottom center; animation: growVine 2.2s forwards ease-out; }
+.vine.left { left: 46%; transform: rotate(-15deg); }
+.vine.right { left: 54%; transform: rotate(15deg); }
+@keyframes growVine { to { height: 180px; } }
+
+/* LEAVES */
+.leaf { position: absolute; width: 20px; height: 12px; background: #3fa34d; border-radius: 50%; opacity: 0; transform: scale(0); animation: leafPop 0.6s forwards ease-out; }
+@keyframes leafPop { to { opacity: 1; transform: scale(1); } }
+
+/* PETALS */
+.petal-wrap { position: absolute; left: 50%; bottom: 220px; transform-origin: bottom center; }
+.petal { width: 50px; height: 75px; background: #9b003f; border-radius: 60% 60% 40% 40%; transform-origin: bottom center; transform: scale(0); opacity: 0; animation: bloom 0.9s forwards ease-out; }
+.inner-petal { width: 40px; height: 60px; background: #d40055; border-radius: 60% 60% 40% 40%; transform-origin: bottom center; transform: scale(0); opacity: 0; animation: bloom 0.9s forwards ease-out; }
+@keyframes bloom { to { transform: scale(1); opacity: 1; } }
+
+/* POLLEN */
+.pollen { position: absolute; bottom: 220px; left: 50%; width: 45px; height: 45px; background: yellow; border-radius: 50%; transform: translate(-50%, 0); opacity: 0; transition: transform 0.6s ease-out, opacity 0.6s ease-out; }
+
+/* SWAY */
+@keyframes sway { 0% { transform: rotate(0deg); } 25% { transform: rotate(2deg); } 50% { transform: rotate(0deg); } 75% { transform: rotate(-2deg); } 100% { transform: rotate(0deg); } }
+.bloom-wrap { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); }
+
+/* ===== YES BUTTON PULSE ===== */
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+</style>
+</head>
+
+<body>
+
+<div class="flower-container">
+  <div class="stem" id="stem"></div>
+  <div class="vine left" id="vineLeft"></div>
+  <div class="vine right" id="vineRight"></div>
+  <div class="bloom-wrap" id="bloomWrap"></div>
+</div>
+
+<div class="pollen" id="pollen"></div>
+
+<div class="container">
+  <h1 id="valentineText"></h1>
+  <button id="yes">Yes</button>
+  <button id="no">No</button>
+</div>
+
+<canvas id="confetti"></canvas>
+
+<script>
+/* ===== FLOATING HEARTS ===== */
+function createHeart() {
+  const heart = document.createElement("div");
+  heart.className = "heart";
+  heart.innerHTML = "💗";
+  heart.style.left = Math.random() * 100 + "vw";
+  heart.style.fontSize = 16 + Math.random() * 24 + "px";
+  heart.style.animationDuration = 12 + Math.random() * 10 + "s";
+  heart.style.setProperty("--drift", `${(Math.random() - 0.5) * 80}px`);
+  document.body.appendChild(heart);
+  setTimeout(() => heart.remove(), 22000);
+}
+let heartInterval;
+
+/* ===== NO BUTTON ===== */
+const noBtn = document.getElementById("no");
+let noClickedOnce = false;
+
+noBtn.addEventListener("click", () => { noClickedOnce = true; });
+
+document.addEventListener("mousemove", (e) => {
+  if(noClickedOnce){
+    const rect = noBtn.getBoundingClientRect();
+    const dx = e.clientX - (rect.left + rect.width / 2);
+    const dy = e.clientY - (rect.top + rect.height / 2);
+    if (Math.sqrt(dx*dx + dy*dy) < 100) {
+      noBtn.style.transform = `translate(${(Math.random()-0.5)*400}px, ${(Math.random()-0.5)*400}px)`;
+    }
+  }
+
+  // ===== DYNAMIC PINK GRADIENT =====
+  const gradientX = e.clientX / window.innerWidth;
+  const gradientY = e.clientY / window.innerHeight;
+  const red = Math.floor(255 - gradientX * 50);
+  const pink = Math.floor(182 - gradientY * 50);
+  document.body.style.background = `radial-gradient(circle at ${e.clientX}px ${e.clientY}px, rgb(${red},${pink},203), pink)`;
+});
+
+/* ===== CONFETTI ===== */
+const yesBtn = document.getElementById("yes");
+const container = document.querySelector(".container");
+const canvas = document.getElementById("confetti");
+const ctx = canvas.getContext("2d");
+
+canvas.width = innerWidth;
+canvas.height = innerHeight;
+let confetti = [];
+
+yesBtn.onclick = () => {
+  container.innerHTML = "<h1>🎉 I knew you'd say YES 💖</h1>";
+  startConfetti();
+};
+
+function startConfetti() {
+  for (let i=0;i<150;i++){
+    confetti.push({
+      x: Math.random()*canvas.width,
+      y: Math.random()*canvas.height,
+      r: Math.random()*6+4,
+      color: `hsl(${Math.random()*360},100%,50%)`
+    });
+  }
+  drawConfetti();
+}
+
+function drawConfetti(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  confetti.forEach(c=>{
+    ctx.beginPath();
+    ctx.strokeStyle = c.color;
+    ctx.lineWidth = c.r;
+    ctx.moveTo(c.x,c.y);
+    ctx.lineTo(c.x,c.y+c.r);
+    ctx.stroke();
+    c.y+=3;
+    if(c.y>canvas.height)c.y=-10;
+  });
+  requestAnimationFrame(drawConfetti);
+}
+
+/* ===== FLOWER BLOOM + VINES ===== */
+const stem = document.getElementById("stem");
+const bloomWrap = document.getElementById("bloomWrap");
+const pollen = document.getElementById("pollen");
+const vineLeft = document.getElementById("vineLeft");
+const vineRight = document.getElementById("vineRight");
+
+function addLeaves(vine, side){
+  for(let i=0;i<5;i++){
+    const leaf = document.createElement("div");
+    leaf.className = "leaf";
+    leaf.style.bottom = `${30+i*30}px`;
+    leaf.style.left = side==="left"? "-14px":"0px";
+    leaf.style.animationDelay = `${i*0.25}s`;
+    vine.appendChild(leaf);
+  }
+}
+
+stem.addEventListener("animationend", ()=>{
+  const petals=10, innerPetals=6, hole=18, bloomShift=10;
+
+  for(let i=0;i<petals;i++){
+    const wrap=document.createElement("div");
+    wrap.className="petal-wrap";
+    wrap.style.transform=`translateX(-50%) rotate(${i*(360/petals)}deg) translateY(-${hole+bloomShift}px)`;
+    const petal=document.createElement("div");
+    petal.className="petal";
+    petal.style.animationDelay=`${i*0.1}s`;
+    wrap.appendChild(petal);
+    bloomWrap.appendChild(wrap);
+  }
+
+  for(let i=0;i<innerPetals;i++){
+    const wrap=document.createElement("div");
+    wrap.className="petal-wrap";
+    wrap.style.transform=`translateX(-50%) rotate(${i*(360/innerPetals)}deg) translateY(-${hole+bloomShift}px)`;
+    const petal=document.createElement("div");
+    petal.className="inner-petal";
+    petal.style.animationDelay=`${i*0.1+0.2}s`;
+    wrap.appendChild(petal);
+    bloomWrap.appendChild(wrap);
+  }
+
+  // POLLEN
+  pollen.style.bottom=`${210+bloomShift-hole}px`;
+  setTimeout(()=>pollen.style.opacity="1",800);
+
+  setTimeout(()=>{ bloomWrap.style.animation="sway 3s infinite ease-in-out"; },1200);
+
+  addLeaves(vineLeft,"left");
+  addLeaves(vineRight,"right");
+  setTimeout(()=>{
+    vineLeft.style.setProperty("--angle","-15deg");
+    vineLeft.style.animation+=", vineSway 4s infinite ease-in-out";
+    vineRight.style.setProperty("--angle","15deg");
+    vineRight.style.animation+=", vineSway 4s infinite ease-in-out";
+  },2200);
+
+  // HEARTS appear after flower bloom
+  setTimeout(()=>{
+    createHeart();
+    heartInterval = setInterval(createHeart, 1200);
+  },1200);
+
+  // START TYPING TEXT AFTER HEART POP
+  setTimeout(startTyping, 2200);
+});
+
+/* ===== TYPING TEXT + BUTTONS FADE IN ===== */
+const valentineText = document.getElementById("valentineText");
+const text = "Will you be my Valentine? 💌";
+
+function startTyping() {
+  valentineText.innerHTML = "";
+  let index = 0;
+  function typeNextLetter() {
+    if(index < text.length){
+      valentineText.innerHTML += text[index];
+      index++;
+      setTimeout(typeNextLetter, 100 + Math.random()*150);
+    } else {
+      // FADE IN YES / NO BUTTONS AFTER TYPING
+      document.getElementById("yes").style.opacity = 1;
+      document.getElementById("no").style.opacity = 1;
+    }
+  }
+  typeNextLetter();
+}
+</script>
+</body>
+</html>
